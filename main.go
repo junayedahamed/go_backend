@@ -178,6 +178,40 @@ func main() {
 
 	})
 
+	// delete user by id
+
+	router.DELETE("/del-user/:id", func(ctx *gin.Context) {
+
+		id := ctx.Params.ByName("id")
+
+		uid, err := strconv.Atoi(id)
+		if err != nil {
+			ctx.JSON(303, gin.H{
+				"messages": "enter correct id",
+			})
+			return
+		}
+
+		for i, m := range messages {
+			if uid == m.UserId {
+				messages = append(messages[:i], messages[i+1:]...)
+				ctx.JSON(200, gin.H{
+					"messages": "success",
+					"data":     messages,
+				})
+				return
+			}
+		}
+
+		ctx.JSON(
+			404,
+			gin.H{
+				"messages": "Item Not found",
+			},
+		)
+
+	})
+
 	router.Run(":3333")
 
 }
