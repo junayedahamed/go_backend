@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"math"
 	"strconv"
 	"strings"
 
@@ -10,123 +9,111 @@ import (
 )
 
 type Greets struct {
-	Message string `json:"message"`
+	UserName string `json:"username"`
+	UserId   int    `json:"userId"`
+	Message  string `json:"message"`
 }
 
 func main() {
 
 	router := gin.Default()
 
-	router.GET("/ping/:num1/:num2", func(c *gin.Context) {
-		fmt.Print("here")
-		num1, err1 := strconv.ParseFloat(c.Param("num1"), 64)
-		if err1 != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Invalid params",
-			})
-			return
-
-		}
-
-		num2, err2 := strconv.ParseFloat(c.Param("num2"), 64)
-
-		if err2 != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Invalid params",
-			})
-			return
-
-		}
-
-		sum := num1 + num2
-		c.JSON(200, gin.H{
-			"message": "pong",
-			"sum":     sum,
-		})
-	})
-
-	router.GET("/sub/:num1/:num2", func(c *gin.Context) {
-		num1, err1 := strconv.ParseFloat(c.Param("num1"), 64)
-		if err1 != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Invalid params",
-			})
-			return
-
-		}
-
-		num2, err2 := strconv.ParseFloat(c.Param("num2"), 64)
-
-		if err2 != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Invalid params",
-			})
-			return
-
-		}
-
-		sum := num1 - num2
-		c.JSON(200, gin.H{
-
-			"sum": sum,
-		})
-
-	})
-	// fmt.Println("http://localhost:3030")
-
-	router.GET("/item", func(c *gin.Context) {
-		query := c.Query("q")
-		fmt.Println(query)
-		data := []Greets{
-			{Message: "hi"},
-			{Message: "Hello"},
-			{Message: "Test"},
-		}
-
-		var results []Greets
-		query = strings.ToLower(query)
-		fmt.Print(query)
-		for _, d := range data {
-			message := strings.ToLower(d.Message)
-			fmt.Println(strings.Contains(message, query))
-			if strings.HasPrefix(message, query) || strings.HasSuffix(message, query) || strings.Contains(message, query) {
-				// result = append(result, product)
-
-				results = append(results, d)
-			}
-		}
-		c.JSON(200, gin.H{
-			"data": results,
-		})
-
-	})
-
-	type user struct {
-		uid      string `json:"uid"`
-		password string `json:"password"`
+	var messages = []Greets{
+		{
+			UserName: "Ajoy",
+			UserId:   1,
+			Message:  "Hello ",
+		},
+		{
+			UserName: "Junayed",
+			UserId:   2,
+			Message:  "Hii ",
+		},
+		{
+			UserName: "Murad",
+			UserId:   3,
+			Message:  "Hey ",
+		},
 	}
+	router.GET("/get-data", func(ctx *gin.Context) {
 
-	var users = []user{
-		{uid: "admin", password: "1234"},
-		{uid: "user", password: "[PASSWORD]"},
-	}
+		ctx.JSON(200, gin.H{
+			"messages": "success",
+			"data":     messages,
+		})
 
-	router.GET("/login-user/:uid/:pass", func(ctx *gin.Context) {
-		uid := ctx.Params.ByName("uid")
-		pass := ctx.Params.ByName("pass")
+	})
 
-		for i := 0; i < len(users); i++ {
-			if uid == users[i].uid && pass == users[i].password {
+	router.GET("/get-user-by-id/:id", func(ctx *gin.Context) {
+
+		id := ctx.Params.ByName("id")
+		parsedId, err := strconv.Atoi(id)
+
+		if err != nil {
+
+			ctx.JSON(303, gin.H{
+				"messages": "Enter correct id",
+			})
+			return
+		}
+
+		for _, msg := range messages {
+
+			if msg.UserId == parsedId {
+
 				ctx.JSON(200, gin.H{
-					"message": "Login success",
+					"message": "success",
+					"data":    msg,
 				})
 				return
 			}
+
 		}
 
-		ctx.JSON(200, gin.H{
-			"message": "Login failed",
+		ctx.JSON(400, gin.H{
+			"messages": "No user found",
 		})
+
+	})
+
+	// search using all
+	router.GET("/search-user", func(ctx *gin.Context) {
+
+		userName := ctx.Query("username")
+		id, err := strconv.Atoi(ctx.Query("id"))
+		message := ctx.Query("message")
+
+		var findData []Greets
+
+		if err != nil {
+
+			ctx.JSON(303, gin.H{
+				"message": "Enter correct id",
+			})
+			return
+
+		}
+
+		if userName != "" || id > math.MinInt && id < math.MaxInt || message != "" {
+
+			for _, m := range messages {
+
+				if strings.EqualFold(m.UserName, userName) || m.UserId == id || strings.EqualFold(message, m.Message) {
+					findData = append(findData, m)
+				}
+			}
+
+			ctx.JSON(200, gin.H{
+				"message": "success",
+				"data":    findData,
+			})
+			return
+
+		}
+		ctx.JSON(400, gin.H{
+			"message": "No user found",
+		})
+
 	})
 
 	router.Run(":3333")
