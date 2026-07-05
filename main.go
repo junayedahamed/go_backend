@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"strconv"
 	"strings"
 
@@ -70,48 +69,111 @@ func main() {
 
 		}
 
-		ctx.JSON(400, gin.H{
-			"messages": "No user found",
+		ctx.JSON(200, gin.H{
+			"messages": "success",
+			"data":     messages,
 		})
 
 	})
 
 	// search using all
 	router.GET("/search-user", func(ctx *gin.Context) {
+		q := ctx.Query("q")
+		if q == "" {
+			ctx.JSON(400, gin.H{
+				"message": "No user found",
+				"data":    []Greets{},
+			})
+			return
+		}
 
-		userName := ctx.Query("username")
-		id, err := strconv.Atoi(ctx.Query("id"))
-		message := ctx.Query("message")
+		qLower := strings.ToLower(q)
+		id, err := strconv.Atoi(q)
+		hasID := err == nil
 
 		var findData []Greets
 
-		if err != nil {
-
-			ctx.JSON(303, gin.H{
-				"message": "Enter correct id",
-			})
-			return
-
+		for _, m := range messages {
+			userIdStr := strconv.Itoa(m.UserId)
+			if strings.Contains(strings.ToLower(m.UserName), qLower) ||
+				strings.Contains(strings.ToLower(m.Message), qLower) ||
+				strings.Contains(userIdStr, q) ||
+				(hasID && m.UserId == id) {
+				findData = append(findData, m)
+			}
 		}
 
-		if userName != "" || id > math.MinInt && id < math.MaxInt || message != "" {
-
-			for _, m := range messages {
-
-				if strings.EqualFold(m.UserName, userName) || m.UserId == id || strings.EqualFold(message, m.Message) {
-					findData = append(findData, m)
-				}
-			}
-
+		if len(findData) > 0 {
 			ctx.JSON(200, gin.H{
 				"message": "success",
 				"data":    findData,
 			})
-			return
-
+		} else {
+			ctx.JSON(400, gin.H{
+				"message": "No user found",
+				"data":    []Greets{},
+			})
 		}
-		ctx.JSON(400, gin.H{
-			"message": "No user found",
+	})
+
+	router.POST("/add-person", func(ctx *gin.Context) {
+
+		var greets Greets
+		if err := ctx.BindJSON(&greets); err != nil {
+			ctx.JSON(400, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+		messages = append(messages, greets)
+		ctx.JSON(200, gin.H{
+			"message": "success",
+			"data":    greets,
+		})
+
+	})
+
+	//  make auth
+
+	router.POST("/login", func(ctx *gin.Context) {
+
+		var loginUser Greets
+
+		if err := ctx.BindJSON(&loginUser); err != nil {
+			ctx.JSON(400, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		if loginUser.UserName == "" {
+			ctx.JSON(400, gin.H{
+				"message": "username is required",
+			})
+			return
+		}
+		if loginUser.UserId == 0 {
+			ctx.JSON(
+				400,
+				gin.H{
+					"message": "user id is required",
+				},
+			)
+			return
+		}
+
+		for _, user := range messages {
+			if user.UserId == loginUser.UserId && user.UserName == loginUser.UserName {
+				ctx.JSON(200, gin.H{
+					"message": "success",
+					"data":    user,
+				})
+				return
+			}
+		}
+
+		ctx.JSON(401, gin.H{
+			"message": "Invalid credantial",
 		})
 
 	})
