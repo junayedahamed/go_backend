@@ -1,7 +1,9 @@
 package main
 
 import (
+	"math"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -70,6 +72,46 @@ func main() {
 
 		ctx.JSON(400, gin.H{
 			"messages": "No user found",
+		})
+
+	})
+
+	// search using all
+	router.GET("/search-user", func(ctx *gin.Context) {
+
+		userName := ctx.Query("username")
+		id, err := strconv.Atoi(ctx.Query("id"))
+		message := ctx.Query("message")
+
+		var findData []Greets
+
+		if err != nil {
+
+			ctx.JSON(303, gin.H{
+				"message": "Enter correct id",
+			})
+			return
+
+		}
+
+		if userName != "" || id > math.MinInt && id < math.MaxInt || message != "" {
+
+			for _, m := range messages {
+
+				if strings.EqualFold(m.UserName, userName) || m.UserId == id || strings.EqualFold(message, m.Message) {
+					findData = append(findData, m)
+				}
+			}
+
+			ctx.JSON(200, gin.H{
+				"message": "success",
+				"data":    findData,
+			})
+			return
+
+		}
+		ctx.JSON(400, gin.H{
+			"message": "No user found",
 		})
 
 	})
