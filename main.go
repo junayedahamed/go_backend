@@ -178,6 +178,52 @@ func main() {
 
 	})
 
+	// put user by id
+	router.PUT("/update-user/:id", func(ctx *gin.Context) {
+
+		var updateUser Greets
+		id := ctx.Params.ByName("id")
+		parsedId, err := strconv.Atoi(id)
+
+		if err != nil {
+			ctx.JSON(303, gin.H{
+				"message": "enter correct id",
+			})
+			return
+		}
+		if err := ctx.BindJSON(&updateUser); err != nil {
+			ctx.JSON(400, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+		if updateUser.UserName == "" && updateUser.Message == "" {
+			ctx.JSON(400, gin.H{
+				"message": "please provide at least one field to update (username or message)",
+			})
+			return
+		}
+
+		for i, user := range messages {
+			if user.UserId == parsedId {
+				if updateUser.UserName != "" {
+					user.UserName = updateUser.UserName
+				}
+				if updateUser.Message != "" {
+					user.Message = updateUser.Message
+				}
+				messages[i] = user
+				ctx.JSON(200, gin.H{
+					"message": "success",
+					"data":    messages[i],
+				})
+				return
+			}
+
+		}
+
+	})
+
 	// delete user by id
 
 	router.DELETE("/del-user/:id", func(ctx *gin.Context) {
