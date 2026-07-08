@@ -1,16 +1,25 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
 	"strconv"
 	"strings"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 type Greets struct {
 	UserName string `json:"username"`
 	UserId   int    `json:"userId"`
 	Message  string `json:"message"`
+}
+
+type Config struct {
+	Port string `env:"PORT"`
 }
 
 func main() {
@@ -191,7 +200,7 @@ func main() {
 			})
 			return
 		}
-		if err := ctx.BindJSON(&updateUser); err != nil {
+		if err := ctx.ShouldBind(&updateUser); err != nil {
 			ctx.JSON(400, gin.H{
 				"message": err.Error(),
 			})
@@ -258,6 +267,19 @@ func main() {
 
 	})
 
-	router.Run(":3333")
+	var config Config
+
+	// 2. Attempt to load the .env file
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Warning: Error loading .env file, relying on system vars or defaults:", err)
+	}
+
+	// 3. Parse variables from the environment into the config struct
+	if err := env.Parse(&config); err != nil {
+		log.Fatalf("Error parsing configuration: %v", err)
+	}
+
+	router.Run(":" + config.Port)
 
 }
