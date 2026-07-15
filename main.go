@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go_api/internal/middleware"
 	"log"
 
 	"strconv"
@@ -43,6 +44,15 @@ func main() {
 			Message:  "Hey ",
 		},
 	}
+	// cors
+
+	// router.Use(
+	// 	middleware.CORS(),
+	// )
+
+	router.Use(middleware.Logger())
+
+	//
 	router.GET("/get-data", func(ctx *gin.Context) {
 
 		ctx.JSON(200, gin.H{
