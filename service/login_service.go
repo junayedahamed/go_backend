@@ -1,7 +1,7 @@
 package service
 
-func isValidUidPass(uid string, pass string) bool {
+// func isValidUidPass(uid string, pass string) bool {
 
-	return true
+// 	return true
 
-}
+// }
