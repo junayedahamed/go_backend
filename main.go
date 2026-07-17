@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go_api/internal/middleware"
 	"log"
+	"os"
 
 	"strconv"
 	"strings"
@@ -24,7 +25,9 @@ type Config struct {
 }
 
 func main() {
-
+	if os.Getenv("APP_ENV") == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
 
 	var messages = []Greets{
